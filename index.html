@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscador de Equipamentos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            padding-top: 20px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .search-container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .tab-button {
+            padding: 12px 24px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 1em;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .tab-button.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-button:hover {
+            color: #667eea;
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1em;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+            z-index: 10;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .suggestions.active {
+            display: block;
+        }
+
+        .suggestion-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s ease;
+        }
+
+        .suggestion-item:hover {
+            background-color: #f5f5f5;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .results {
+            margin-top: 30px;
+        }
+
+        .results-title {
+            font-size: 1.2em;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .result-field {
+            margin-bottom: 15px;
+        }
+
+        .result-field-label {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+
+        .result-field-value {
+            color: #333;
+            font-size: 1em;
+            word-break: break-word;
+        }
+
+        .result-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            text-align: center;
+            width: 100%;
+        }
+
+        .result-link:hover {
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .no-results {
+            text-align: center;
+            color: #999;
+            padding: 40px 20px;
+            font-size: 1.1em;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 40px 20px;
+        }
+
+        .empty-state-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .search-container {
+                padding: 20px;
+            }
+
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                flex-wrap: wrap;
+            }
+
+            .tab-button {
+                padding: 10px 16px;
+                font-size: 0.9em;
+            }
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            padding: 20px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Buscador de Equipamentos</h1>
+            <p>Busque por marca ou modelo de equipamentos registrados no Inmetro</p>
+        </div>
+
+        <div class="search-container">
+            <div class="tabs">
+                <button class="tab-button active" data-tab="marca">Por Marca</button>
+                <button class="tab-button" data-tab="modelo">Por Modelo</button>
+            </div>
+
+            <div class="search-box">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Digite a marca do equipamento..." 
+                    autocomplete="off"
+                >
+                <div class="suggestions" id="suggestions"></div>
+            </div>
+        </div>
+
+        <div class="results" id="results"></div>
+    </div>
+
+    <script>
+        let allData = [];
+        let currentTab = 'marca';
+        let searchTimeout;
+
+        // Carregar dados JSON
+        async function loadData() {
+            try {
+                const response = await fetch('dados.json');
+                allData = await response.json();
+                console.log(`Carregados ${allData.length} registros`);
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+                document.getElementById('results').innerHTML = '<div class="no-results">Erro ao carregar dados. Tente recarregar a página.</div>';
+            }
+        }
+
+        // Obter sugestões baseadas no input
+        function getSuggestions(input) {
+            if (!input.trim()) return [];
+
+            const searchField = currentTab === 'marca' ? 'ItemMarca' : 'ItemModelo';
+            const suggestions = new Set();
+
+            allData.forEach(item => {
+                const value = item[searchField] || '';
+                if (value.toLowerCase().includes(input.toLowerCase())) {
+                    suggestions.add(value);
+                }
+            });
+
+            return Array.from(suggestions).sort().slice(0, 10);
+        }
+
+        // Buscar resultados
+        function searchResults(query) {
+            if (!query.trim()) {
+                document.getElementById('results').innerHTML = '';
+                return;
+            }
+
+            const searchField = currentTab === 'marca' ? 'ItemMarca' : 'ItemModelo';
+            const results = allData.filter(item => {
+                const value = item[searchField] || '';
+                return value.toLowerCase() === query.toLowerCase();
+            });
+
+            displayResults(results, query);
+        }
+
+        // Exibir resultados
+        function displayResults(results, query) {
+            const resultsDiv = document.getElementById('results');
+
+            if (results.length === 0) {
+                resultsDiv.innerHTML = `<div class="no-results">Nenhum equipamento encontrado para "${query}"</div>`;
+                return;
+            }
+
+            let html = `<div class="results-title">Encontrados ${results.length} resultado${results.length !== 1 ? 's' : ''}</div>`;
+            html += '<div class="results-grid">';
+
+            results.forEach(item => {
+                html += `
+                    <div class="result-card">
+                        <div class="result-field">
+                            <div class="result-field-label">Marca</div>
+                            <div class="result-field-value">${item.ItemMarca || 'N/A'}</div>
+                        </div>
+                        <div class="result-field">
+                            <div class="result-field-label">Modelo</div>
+                            <div class="result-field-value">${item.ItemModelo || 'N/A'}</div>
+                        </div>
+                        <div class="result-field">
+                            <div class="result-field-label">Número de Registro</div>
+                            <div class="result-field-value">${item.NumeroRegistro || 'N/A'}</div>
+                        </div>
+                        ${item.LINK ? `<a href="${item.LINK}" target="_blank" class="result-link">Ver Detalhes no Inmetro</a>` : ''}
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            resultsDiv.innerHTML = html;
+        }
+
+        // Exibir sugestões
+        function displaySuggestions(suggestions) {
+            const suggestionsDiv = document.getElementById('suggestions');
+
+            if (suggestions.length === 0) {
+                suggestionsDiv.classList.remove('active');
+                return;
+            }
+
+            let html = '';
+            suggestions.forEach(suggestion => {
+                html += `<div class="suggestion-item">${suggestion}</div>`;
+            });
+
+            suggestionsDiv.innerHTML = html;
+            suggestionsDiv.classList.add('active');
+
+            // Adicionar listeners aos itens de sugestão
+            document.querySelectorAll('.suggestion-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    document.getElementById('searchInput').value = item.textContent;
+                    suggestionsDiv.classList.remove('active');
+                    searchResults(item.textContent);
+                });
+            });
+        }
+
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const input = e.target.value;
+
+            clearTimeout(searchTimeout);
+
+            if (input.trim()) {
+                const suggestions = getSuggestions(input);
+                displaySuggestions(suggestions);
+
+                // Se o input corresponder exatamente a uma sugestão, buscar automaticamente
+                if (suggestions.includes(input)) {
+                    searchTimeout = setTimeout(() => {
+                        searchResults(input);
+                    }, 300);
+                }
+            } else {
+                document.getElementById('suggestions').classList.remove('active');
+                document.getElementById('results').innerHTML = '';
+            }
+        });
+
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const input = e.target.value;
+                document.getElementById('suggestions').classList.remove('active');
+                searchResults(input);
+            }
+        });
+
+        // Fechar sugestões ao clicar fora
+        document.addEventListener('click', (e) => {
+            if (e.target.id !== 'searchInput') {
+                document.getElementById('suggestions').classList.remove('active');
+            }
+        });
+
+        // Mudar abas
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                button.classList.add('active');
+
+                currentTab = button.dataset.tab;
+                const placeholder = currentTab === 'marca' 
+                    ? 'Digite a marca do equipamento...' 
+                    : 'Digite o modelo do equipamento...';
+                
+                document.getElementById('searchInput').placeholder = placeholder;
+                document.getElementById('searchInput').value = '';
+                document.getElementById('suggestions').classList.remove('active');
+                document.getElementById('results').innerHTML = '';
+            });
+        });
+
+        // Carregar dados ao iniciar
+        loadData();
+    </script>
+</body>
+</html>
